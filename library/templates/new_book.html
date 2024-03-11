@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title></title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="css/style.css" rel="stylesheet">
+    </head>
+    <body>
+        <form method="POST" name="new_book_form">
+            {% csrf_token %}
+            {{ new_book_form }} 
+
+            <button type="submit">Create</button>
+        </form>
+    </body>
+</html>
