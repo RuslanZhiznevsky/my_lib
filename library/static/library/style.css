@@ -38,6 +38,12 @@ main{
     background: #eee;
 }
 
+.viewed_user{
+    background: #1ff;
+    position: sticky;
+    top: 60px;
+}
+
 a {
     text-decoration: none;
     color: #1ac
