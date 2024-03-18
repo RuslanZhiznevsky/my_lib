@@ -44,10 +44,11 @@ def all_books(request, username=None):
     return render(request, "all_books.html", context=context)
 
 
+# TODO: KeyError with category key
 @login_required
 def category(request, category, username=None):
     if username is None:
-        books = _sort_user_books_by_categories(request.user)
+        books = _sort_user_books_by_categories(request.user)[category]
         viewed_user = None
     else:
         viewed_user = User.objects.get(username=username)
