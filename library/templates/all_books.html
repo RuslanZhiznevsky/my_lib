@@ -1,5 +1,36 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% comment %}
+  context = {
+    "user": requset.user,
+    "viewed_user": User,
+    "books_by_categories": {"cat1": [...], "cat2": [...]}
+  }
+{% endcomment %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'library/all_books.css' %}">
+{% endblock extra_css %}
+
 
 {% block content %}
-    {{ books_by_categories }}    
+    {{ books_by_categories }}
+
+
+    {% for category, books in books_by_categories.items %}
+    <div class="category">
+        <div class="category_header">
+            {{ category }}
+        </div>
+
+        <div class="category_list">
+            {% for book in books %}
+                <div class="book_block">
+                    {{ book.title }}<br>
+                    {{ book.author }}
+                </div> 
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
 {% endblock content %}

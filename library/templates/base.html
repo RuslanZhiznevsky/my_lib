@@ -6,7 +6,9 @@
         <title></title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="{% static 'library/style.css' %}">
+        <link rel="stylesheet" href="{% static 'library/base.css' %}">
+        {% block extra_css %}
+        {% endblock extra_css %}
     </head>
     <body>
         <header>
