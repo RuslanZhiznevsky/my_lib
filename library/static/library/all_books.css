@@ -1,4 +1,40 @@
-.category{
+.categories_conteiner{
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+
     position: sticky;
     top: 78px;
+
+    background-color: #77f;
 }
+
+.books_conteiner{
+    margin-top: 78px;
+
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.books_list{
+    background-color: #77f;
+    min-height: 100%;
+}
+
+.category_header{
+}
+
+.col{
+    width: 20vw;
+    flex-shrink: 0;
+}
+
+.category_list{
+    background-color: #ff0;
+}
+
+.book_block{
+    background-color: red;
+}
+

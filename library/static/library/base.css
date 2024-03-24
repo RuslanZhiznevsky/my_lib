@@ -9,10 +9,11 @@ body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    background: #eee;
 }
 
 header{
-    position: sticky;
+    position: fixed;
     top: 0;
     width: 100vw;
 }
@@ -34,14 +35,15 @@ li{
 }
 
 main{
-    min-height: 200vh;
-    background: #eee;
+    width: min-content;
+    min-width: 100vw;
 }
 
 .viewed_user{
     background: #1ff;
-    position: sticky;
-    top: 60px;
+    position: fixed;
+    top: 59px;
+    width: 100vw;
 }
 
 a {
@@ -50,7 +52,7 @@ a {
 }
 
 footer{
-    position: sticky;
+    position: fixed;
     background: #fff;
     bottom: 0;
     width: 100vw;
