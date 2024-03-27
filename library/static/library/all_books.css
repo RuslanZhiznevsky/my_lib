@@ -27,6 +27,7 @@
 
 .col{
     width: 20vw;
+    min-width: 230px;
     flex-shrink: 0;
 }
 
