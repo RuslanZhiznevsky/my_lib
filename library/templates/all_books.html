@@ -54,6 +54,9 @@
                 {% if book.cover %}
                     cover: {{ book.cover }}
                 {% endif %}
+                {% if book.file %}
+                    file: {{ book.file }} 
+                {% endif %}
             </div> 
         {% endfor %}
     </div>
