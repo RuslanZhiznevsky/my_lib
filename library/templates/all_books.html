@@ -27,6 +27,10 @@
     <div class="books_list col">
         {% for book in books %}
             <div class="book_block">
+                {% if book.cover %}
+            <img src="{{ book.cover.url }}">
+                {% endif %}
+
                 {% if book.title %}
                     {{ book.title }}<br>
                 {% endif %}
@@ -51,9 +55,6 @@
                     comment: {{ book.comment }}<br>
                 {% endif %}
 
-                {% if book.cover %}
-                    cover: {{ book.cover }}
-                {% endif %}
                 {% if book.file %}
                     file: {{ book.file }} 
                 {% endif %}
