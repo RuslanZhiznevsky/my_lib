@@ -7,6 +7,10 @@
         <link href="css/style.css" rel="stylesheet">
     </head>
     <body>
-        {{ new_category_form }} 
+        <form method="POST" name="new_category_form">
+            {% csrf_token %}
+            {{ new_category_form }} 
+            <button type="submit">submit</button>    
+        </form>
     </body>
 </html>

@@ -9,9 +9,12 @@
     background-color: #77f;
 }
 
-.books_conteiner{
-    margin-top: 78px;
+img{
+    height: 150px;
+    align-items: center;
+}
 
+.books_conteiner{
     display: flex;
     flex-direction: row;
     align-items: flex-start;
@@ -26,8 +29,7 @@
 }
 
 .col{
-    width: 20vw;
-    min-width: 230px;
+    width: 230px;
     flex-shrink: 0;
 }
 

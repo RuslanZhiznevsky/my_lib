@@ -37,6 +37,7 @@ li{
 main{
     width: min-content;
     min-width: 100vw;
+    padding-top: 78px;
 }
 
 .viewed_user{
@@ -46,9 +47,14 @@ main{
     width: 100vw;
 }
 
-a {
+header a {
     text-decoration: none;
     color: #1ac
+}
+
+a{
+    text-decoration: none;
+    color: white;
 }
 
 footer{
