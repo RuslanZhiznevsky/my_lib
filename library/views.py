@@ -65,6 +65,7 @@ def category(request, category, username=None):
     return render(request, "category.html", context=context)
 
 
+# !TODO can reach books with the same name
 @login_required
 def book(request, book_title, username=None):
     if username is None:
@@ -91,10 +92,15 @@ def new_book(request):
     if request.method == "POST":
         new_book_form = NewBookForm(request.POST)
         if new_book_form.is_valid():
-            data_to_create_new_book = new_book_form.cleaned_data
-            data_to_create_new_book.update({"user": request.user})
+           # data_to_create_new_book = new_book_form.cleaned_data
+           # data_to_create_new_book.update({"user": request.user})
 
-            Book.objects.create(**data_to_create_new_book)
+           # Book.objects.create(**data_to_create_new_book)
+            
+            new_book_obj = new_book_form.save(commit=False)
+            new_book_obj.user = request.user
+            new_book_obj.clean()
+            new_book_obj.save()
 
             # redirect back
         else:
@@ -121,6 +127,7 @@ def new_category(request):
             new_category_model_obj = new_category_form.save(commit=False)
 
             new_category_model_obj.user = request.user
+            new_category_model_obj.clean()
             new_category_model_obj.save()
         else:
             pass

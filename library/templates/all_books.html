@@ -17,7 +17,11 @@
 <div class="categories_conteiner">
     {% for category in books_by_categories.keys %}
     <div class="category_header col">
-        {{ category }}<br>
+        {% if viewed_user  %}
+            <a href="{% url 'someones_category' viewed_user.username category %}">{{ category }}</a>
+        {% else %}
+            <a href="{% url 'your_category' category %}">{{ category }}</a>
+        {% endif %}
     </div>
     {% endfor %}
     <div class="categories_header col"><a href="{% url 'new_category' %}">new</a></div>
@@ -27,9 +31,15 @@
 {% for books in books_by_categories.values %}
     <div class="books_list col">
         {% for book in books %}
+            {% if viewed_user %}
+            <a href="{% url 'someones_book' viewed_user.username book.title %}"> 
+            {% else %}
+            <a href="{% url 'your_book' book.title %}">
+            {% endif %}
             <div class="book_block">
+
                 {% if book.cover %}
-            <img src="{{ book.cover.url }}">
+                <img src="{{ book.cover.url }}">
                 {% endif %}
 
                 {% if book.title %}
@@ -59,8 +69,12 @@
                 {% if book.file %}
                     file: {{ book.file }} 
                 {% endif %}
-            </div> 
+                </div> 
+            </a>
         {% endfor %}
+        {% if viewed_user is None %}
+            <a href="{% url 'new_book' %}">new</a>
+        {% endif %}
     </div>
 {% endfor %}
 </div>

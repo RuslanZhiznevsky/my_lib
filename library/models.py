@@ -84,7 +84,6 @@ class Book(models.Model):
         "UserCategory",
         on_delete=models.CASCADE,
         verbose_name="category",
-
     )
 
     # TODO constraint or some sort for unique combo of username + title
@@ -119,8 +118,8 @@ class Book(models.Model):
         try:
             if self.category.user != self.user:
                 raise ValidationError("Another user's category was assigned to this book")
-
-        # for NewBook form which gets no user object:
+        # Should only occure when using NewBookForm,
+        # because user field has blank and null = False 
         except User.DoesNotExist:
             pass
 
@@ -132,6 +131,10 @@ class Book(models.Model):
                 check=~models.Q(started__gt=models.F("finished")),
                 name="%(app_label)s_%(class)s_finished_before_started"
             ),
+            models.UniqueConstraint(
+                fields=["user", "title", "author"],
+                name="%(app_label)s_%(class)s_user_title_author_unique",
+            )
         ]
 
 
