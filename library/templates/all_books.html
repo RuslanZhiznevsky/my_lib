@@ -32,9 +32,9 @@
     <div class="books_list col">
         {% for book in books %}
             {% if viewed_user %}
-            <a href="{% url 'someones_book' viewed_user.username book.title %}"> 
+            <a href="{% url 'someones_book' viewed_user.username book.title book.author %}"> 
             {% else %}
-            <a href="{% url 'your_book' book.title %}">
+            <a href="{% url 'your_book' book.title book.author %}">
             {% endif %}
             <div class="book_block">
 

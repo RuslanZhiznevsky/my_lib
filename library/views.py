@@ -67,13 +67,13 @@ def category(request, category, username=None):
 
 # !TODO can reach books with the same name
 @login_required
-def book(request, book_title, username=None):
+def book(request, book_title, author, username=None):
     if username is None:
-        book = request.user.books.get(title=book_title)
+        book = request.user.books.get(title=book_title, author=author)
         viewed_user = None
     else:
         viewed_user = User.objects.get(username=username)
-        book = viewed_user.books.get(title=book_title)
+        book = viewed_user.books.get(title=book_title, author=author)
 
     context = {
         "user": request.user,
@@ -99,6 +99,7 @@ def new_book(request):
             
             new_book_obj = new_book_form.save(commit=False)
             new_book_obj.user = request.user
+            
             new_book_obj.clean()
             new_book_obj.save()
 
