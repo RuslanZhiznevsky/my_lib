@@ -28,7 +28,7 @@
 </div>
 
 <div class="books_conteiner">
-{% for books in books_by_categories.values %}
+{% for category, books in books_by_categories.items %}
     <div class="books_list col">
         {% for book in books %}
             {% if viewed_user %}
@@ -73,7 +73,7 @@
             </a>
         {% endfor %}
         {% if viewed_user is None %}
-            <a href="{% url 'new_book' %}">new</a>
+            <a href="{% url 'new_book' %}?category={{ category }}">new</a>
         {% endif %}
     </div>
 {% endfor %}

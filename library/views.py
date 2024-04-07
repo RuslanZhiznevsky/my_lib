@@ -108,7 +108,24 @@ def new_book(request):
             pass
 
     if request.method == "GET":
-        new_book_form = NewBookForm()
+        category_name = request.GET.get("category", None)
+        category_obj = UserCategory.objects.get(
+            user=request.user,
+            category_name=category_name,
+        )
+
+        initial = dict(request.GET)
+        initial = {key: value[0] for key, value in initial.items()} # value = ['string'], so value[0] == 'string'
+        initial.update({"category": category_obj}) # category must be UserCategory
+
+        # delete anything that was provided inside 'file' GET parameter
+        # for security
+        try:
+            del initial["file"]
+        except KeyError:
+            pass
+
+        new_book_form = NewBookForm(initial=initial)
 
     context = {
         "new_book_form": new_book_form,
