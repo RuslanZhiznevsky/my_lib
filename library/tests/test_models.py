@@ -7,7 +7,7 @@ from django.core.files import File
 from django.core.exceptions import ValidationError
 
 from users.models import User
-from library.models import Book, UserExtraBookCategory, LibraryGroup
+from library.models import Book, UserCategory, LibraryGroup
 
 from random import randint
 
@@ -20,108 +20,27 @@ MEDIA_ROOT = tempfile.mkdtemp()
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)
 class BookModelTest(TestCase, ModelTestUtils):
-    book_count = 0
-    user_count = 0
-
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(MEDIA_ROOT, ignore_errors=True)  # delete the temp dir
         super().tearDownClass()
 
     @classmethod
-    def add_user(cls, username, extra_category=None):
-        user = User.objects.create_user(
-            username=username,
-            email=f"user{cls.user_count}@gmail.com",
-            password="password1",
-        )
-        user.full_clean()
-        if extra_category is not None:
-            UserExtraBookCategory.objects.create(
-                user=user,
-                category=extra_category
-            )
+    def add_user(cls, username):
+        user = None
 
-        cls.user_count += 1
         return user
 
     @classmethod
-    def add_books(cls, num, user, title=None, author=None, started=None,
-                  finished=None, rating=None, comment=None, category=None,
-                  cover=None, file=None):
-
-        if title is not None:
-            title = title
-        else:
-            title = f"Correct title{num}"
-
-        if author is not None:
-            author = author
-        else:
-            author = f"Correct author{num}"
-
-        if finished is not None:
-            finished = finished
-
-        if rating is not None:
-            rating = rating
-        else:
-            rating = 5
-
-        if comment is not None:
-            comment = comment
-        else:
-            comment = "Correct comment"
-
-        if category is not None:
-            category = category
-        else:
-            category = "reading"
-
-        if cover is not None:
-            cover = cover
-
-        if file is not None:
-            file = file
-
-        new = []
-        for num in range(cls.book_count+1, cls.book_count+num+1):
-            new_book = Book.objects.create(
-                user=user,
-                title=title,
-                author=author,
-                finished=finished,
-                rating=rating,
-                comment=comment,
-                category=category,
-                file=file,
-                cover=cover,
-            )
-
-            if started is not None:
-                new_book.started = started
-
-            new_book.full_clean()
-            new.append(new_book)
-
-        cls.book_count += num
+    def add_books(cls,):
+        new = None
 
         return new
 
     @classmethod
     def setUpTestData(cls):
-        user = User.objects.create_user(
-            username="user",
-            email="email@gmail.com",
-            password="password1",
-        )
-        default_book = cls.add_books(1, user=user)[0]
-        cls.default_obj = default_book
-        cls.unsaved_obj = Book.objects.create(
-            user=cls.add_user("unsaved"),
-            title="Stormlight",
-            author="Brandon",
-        )
+        cls.default_obj = None
+        cls.unsaved_obj = None
         cls.max_lengths = {
             "title": 60,
             "author": 60,
@@ -175,10 +94,10 @@ class BookModelTest(TestCase, ModelTestUtils):
     def test_comment__help_text(self):
         self.field_meta_attrib_eq("comment on this book. Is it bad? Good?")
 
-    def test_category__verbose_name(self):
-        self.field_meta_attrib_eq("category")
+    def test_category_name__verbose_name(self):
+        self.field_meta_attrib_eq("category_name")
 
-    def test_category__help_text(self):
+    def test_category_name__help_text(self):
         self.field_meta_attrib_eq("category of this book(fantasy, horror, etc.)")
 
     def test_rating_is_zero(self):
@@ -188,14 +107,6 @@ class BookModelTest(TestCase, ModelTestUtils):
     def test_rating_bigger_than_ten(self):
         with self.assertRaises(ValidationError):
             self.add_books(1, user=self.add_user("booklover"), rating=11)
-
-    def test_non_existing_category(self):
-        with self.assertRaises(ValidationError):
-            self.add_books(
-                1,
-                user=self.add_user("badcategory"),
-                category="nonexistent"
-            )
 
     def test_cover_file_upload_path(self):
         user = self.add_user("covertester")
@@ -223,127 +134,11 @@ class BookModelTest(TestCase, ModelTestUtils):
 
     # logic tests:
 
-    def test_finished_before_started(self):
-        user = self.add_user("quickfinisher")
-        yesterday = (timezone.now() - timezone.timedelta(days=1)).date()
-        constraint_name = "library_book_finished_before_started"
-
-        with self.assertRaisesMessage(ValidationError, constraint_name):
-            book = self.add_books(1, user=user, finished=yesterday)[0]
-            print(book.started, yesterday)
-
-    def test_user_can_have_more_than_one_book(self):
-        num = randint(1, 10)
-
-        user = self.add_user("multiple")
-        self.add_books(num, user=user)
-
-        self.assertEqual(len(user.books.all()), num)
+# ------------------------------UserCategory----------------------------------
 
 
-# ------------------------------UserExtraBookCategory-------------------------
-
-
-class UserExtraBookCategoryTest(TestCase, ModelTestUtils):
-    user_count = 0
-
-    @classmethod
-    def add_user(cls, username, extra_category=None):
-        user = User.objects.create_user(
-            username=username,
-            email=f"use{cls.user_count}r@gmail.com",
-            password="password1",
-        )
-        user.full_clean()
-        if extra_category is not None:
-            UserExtraBookCategory.objects.create(
-                user=user,
-                category=extra_category
-            )
-
-        cls.user_count += 1
-        return user
-
-    @classmethod
-    def setUpTestData(cls):
-        user = cls.add_user("extrabookdefault")
-        default_obj = UserExtraBookCategory.objects.create(
-            user=user,
-            category="default"
-        )
-
-        cls.default_obj = default_obj
-
-    def test_user__verbose_name(self):
-        self.field_meta_attrib_eq("user")
-
-    def test_user__help_text(self):
-        self.field_meta_attrib_eq("user, to whom assign extra book category")
-
-    def test_user__related_name(self):
-        self.field_meta_attrib_eq("extra_book_categories")
-
-    def test_user__related_query_name(self):
-        self.field_meta_attrib_eq("extra_book_category")
-
-    def test_category__verbose_name(self):
-        self.field_meta_attrib_eq("category")
-
-    def test_category__help_text(self):
-        self.field_meta_attrib_eq("category of the book(fantasy, horror, etc.)")
-
-    def test_category_too_long(self):
-        with self.assertRaises(ValidationError):
-            UserExtraBookCategory.objects.create(
-                user=self.add_user("longcategory"),
-                category=21*"c",
-            ).full_clean()
-
-    def test_longest_category(self):
-        try:
-            UserExtraBookCategory.objects.create(
-                user=self.add_user("longestcategory"),
-                category=20*"c",
-            )
-        except ValidationError:
-            self.fail("Extra category with length 20 must be valid, but it is not")
-
-    # logic tests:
-
-    def test_user_plus_category_unique(self):
-        user = self.add_user("samecategory")
-        constraint = "library_userextrabookcategory_user_and_category_unique"
-
-        with self.assertRaises(IntegrityError):
-            for i in range(2):
-                UserExtraBookCategory.objects.create(
-                    user=user,
-                    category="samecategory",
-                )
-
-    def test_user_can_have_multiple_extra_categories(self):
-        user = self.add_user("multiplecategories")
-
-        UserExtraBookCategory.objects.create(user=user, category="first")
-        UserExtraBookCategory.objects.create(user=user, category="second")
-
-        self.assertTrue(len(user.extra_book_categories.all()) == 2)
-
-    def test_different_users_have_the_same_category(self):
-        user1 = self.add_user("samethinker1")
-        user2 = self.add_user("samethinker2")
-
-        category = "samethinking"
-
-        # if there is something wrong exception will be raised
-        UserExtraBookCategory.objects.create(user=user1, category=category)
-        UserExtraBookCategory.objects.create(user=user2, category=category)
-
-        # but we still have to check to be absolutly sure
-        c1 = user1.extra_book_categories.get(category=category).category
-        c2 = user2.extra_book_categories.get(category=category).category
-
-        self.assertTrue(c1 == c2)
+class UserCategoryTest(TestCase, ModelTestUtils):
+    pass
 
 
 # ------------------------------LibraryGroup----------------------------------

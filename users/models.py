@@ -81,7 +81,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # followers                 from UserFollowing model
 
     # books                     from library.Book model
-    # extra_book_catagories     from library.models.Book
+    # book_catagories     from library.models.Book
 
     to_show = models.BooleanField(
         verbose_name="to show",

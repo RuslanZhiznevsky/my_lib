@@ -1,5 +1,5 @@
 from django.forms import ModelForm
-from library.models import Book, UserCategory
+from library.models import Book, BookCategory
 
 
 class NewBookForm(ModelForm):
@@ -13,5 +13,5 @@ class NewBookForm(ModelForm):
 
 class NewCategoryForm(ModelForm):
     class Meta:
-        model = UserCategory
+        model = BookCategory
         fields = ["category_name"]

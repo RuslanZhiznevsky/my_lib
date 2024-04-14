@@ -2,20 +2,22 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 
-from library.models import UserCategory, Book
+from library.models import BookCategory, Book
 from library.forms import NewBookForm, NewCategoryForm
 
 from users.models import User
 
+from collections import OrderedDict
+
 
 def _sort_user_books_by_categories(user):
     books = user.books.all()
-    books_by_categories = {}
+    books_by_categories = OrderedDict()
 
     # make all the possible for this user categories empty lists
     # so when there is no books in some category(ies) you can still access this
     # category dict key in category() view
-    category_objs = UserCategory.objects.filter(user=user)
+    category_objs = BookCategory.objects.filter(user=user).order_by("position")
     for category in [category_obj.category_name for category_obj in category_objs]:
         books_by_categories[category] = []
 
@@ -70,7 +72,6 @@ def category(request, category, username=None):
     return render(request, "category.html", context=context)
 
 
-# !TODO can reach books with the same name
 @login_required
 def book(request, book_title, author, username=None):
     if username is None:
@@ -110,14 +111,14 @@ def new_book(request):
     if request.method == "GET":
         category_name = request.GET.get("category", None)
         category_obj = get_object_or_404(
-            UserCategory,
+            BookCategory,
             user=request.user,
             category_name=category_name,
         )
 
         initial = dict(request.GET)
         initial = {key: value[0] for key, value in initial.items()} # value = ['string'], so value[0] == 'string'
-        initial.update({"category": category_obj}) # category must be UserCategory object
+        initial.update({"category": category_obj}) # category must be BookCategory object
 
         # delete anything that was provided inside 'file' & 'cover' GET parameter
         # for security

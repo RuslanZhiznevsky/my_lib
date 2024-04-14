@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.core.validators import (
     MaxValueValidator,
     MinValueValidator,
@@ -81,12 +81,11 @@ class Book(models.Model):
 
     # TODO on_delete change category to some default
     category = models.ForeignKey(
-        "UserCategory",
+        "BookCategory",
         on_delete=models.CASCADE,
         verbose_name="category",
     )
 
-    # TODO constraint or some sort for unique combo of username + title
     # TODO change filepath when changed inside view
     def _get_bookfile_upload_path(instance, filename):
         return f"books/{instance.user}/{instance.author}_{instance.title}/{filename}"
@@ -139,21 +138,48 @@ class Book(models.Model):
 
 
 # TODO: add tests
-class UserCategory(models.Model):
+class BookCategory(models.Model):
+    def _last_position():
+        field = "position"
+        _dict = BookCategory.objects.aggregate(models.Max(field, default=0))
+
+        return _dict[f"{field}__max"] + 1
+
+    def swap_position(self, new_position: int):
+        with transaction.atomic():
+            if self.position == new_position:
+                # no need to swap with itself
+                return
+            else:
+                book_category_to_swap_with = BookCategory.objects.get(position=new_position)
+
+                book_category_to_swap_with.position = self.position
+                self.position = new_position
+
+                self.save()
+                book_category_to_swap_with.save()
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name="user",
         help_text="user, to whom add category",
         on_delete=models.CASCADE,
-        related_name="user_categories",
-        related_query_name="user_category",
+        related_name="book_categories",
+        related_query_name="book_category",
     )
     category_name = models.CharField(
-        verbose_name="category",
+        verbose_name="category_name",
         help_text="category of the book(fantasy, horror, etc.)",
         max_length=20,
         blank=False,
         # don't set True if blank=True
+        null=False,
+    )
+    position = models.PositiveIntegerField(
+        default=_last_position,
+        verbose_name="position",
+        help_text="position in the list of categories",
+        blank=False,
         null=False,
     )
 
@@ -162,11 +188,15 @@ class UserCategory(models.Model):
             models.UniqueConstraint(
                 name="%(app_label)s_%(class)s_user_and_category_unique",
                 fields=["user", "category_name"]
+            ),
+            models.UniqueConstraint(
+                fields=["user", "position"],
+                name="%(app_label)s_%(class)s_user_and_postion_unique",
             )
         ]
 
     def __str__(self):
-        return f"{self.user}: '{self.category_name}' category"
+        return f"{self.user}: '{self.category_name}' category[{self.position}]"
 
 
 class LibraryGroup(models.Model):
@@ -190,7 +220,7 @@ class LibraryGroup(models.Model):
         unique=True,
         primary_key=True,
     )
-    # users retreived from user.User
+
     users = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         verbose_name="group members",
