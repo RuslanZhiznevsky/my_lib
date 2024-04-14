@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 
 from library.models import UserCategory, Book
@@ -25,14 +25,20 @@ def _sort_user_books_by_categories(user):
     return books_by_categories
 
 
-@login_required  # login_url="/login/")
-def all_books(request, username=None):
+def _get_books_by_categories_and_viewed_user(request, username):
     if username is None:
         books_by_categories = _sort_user_books_by_categories(request.user)
         viewed_user = None
     else:
-        viewed_user = User.objects.get(username=username)
+        viewed_user = get_object_or_404(User, username=username)
         books_by_categories = _sort_user_books_by_categories(viewed_user)
+
+    return books_by_categories, viewed_user
+
+
+@login_required  # login_url="/login/")
+def all_books(request, username=None):
+    books_by_categories, viewed_user = _get_books_by_categories_and_viewed_user(request, username)
 
     context = {
         "user": request.user,
@@ -47,12 +53,8 @@ def all_books(request, username=None):
 # TODO: KeyError with category key
 @login_required
 def category(request, category, username=None):
-    if username is None:
-        books = _sort_user_books_by_categories(request.user)[category]
-        viewed_user = None
-    else:
-        viewed_user = User.objects.get(username=username)
-        books = _sort_user_books_by_categories(viewed_user)[category]
+    books_by_categories, viewed_user = _get_books_by_categories_and_viewed_user(request, username)
+    books = books_by_categories[category]
 
     context = {
         "user": request.user,
@@ -69,11 +71,11 @@ def category(request, category, username=None):
 @login_required
 def book(request, book_title, author, username=None):
     if username is None:
-        book = request.user.books.get(title=book_title, author=author)
+        book = get_object_or_404(Book, user=request.user, title=book_title, author=author)
         viewed_user = None
     else:
-        viewed_user = User.objects.get(username=username)
-        book = viewed_user.books.get(title=book_title, author=author)
+        viewed_user = get_object_or_404(User, username=username)
+        book = get_object_or_404(Book, user=viewed_user, title=book_title, author=author)
 
     context = {
         "user": request.user,
@@ -92,14 +94,9 @@ def new_book(request):
     if request.method == "POST":
         new_book_form = NewBookForm(request.POST)
         if new_book_form.is_valid():
-           # data_to_create_new_book = new_book_form.cleaned_data
-           # data_to_create_new_book.update({"user": request.user})
-
-           # Book.objects.create(**data_to_create_new_book)
-            
             new_book_obj = new_book_form.save(commit=False)
+
             new_book_obj.user = request.user
-            
             new_book_obj.clean()
             new_book_obj.save()
 
@@ -109,19 +106,25 @@ def new_book(request):
 
     if request.method == "GET":
         category_name = request.GET.get("category", None)
-        category_obj = UserCategory.objects.get(
+        category_obj = get_object_or_404(
+            UserCategory,
             user=request.user,
             category_name=category_name,
         )
 
         initial = dict(request.GET)
         initial = {key: value[0] for key, value in initial.items()} # value = ['string'], so value[0] == 'string'
-        initial.update({"category": category_obj}) # category must be UserCategory
+        initial.update({"category": category_obj}) # category must be UserCategory object
 
-        # delete anything that was provided inside 'file' GET parameter
+        # delete anything that was provided inside 'file' & 'cover' GET parameter
         # for security
         try:
             del initial["file"]
+        except KeyError:
+            pass
+
+        try:
+            del initial["cover"]
         except KeyError:
             pass
 
