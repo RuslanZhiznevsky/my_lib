@@ -24,7 +24,9 @@
         {% endif %}
     </div>
     {% endfor %}
-    <div class="categories_header col"><a href="{% url 'new_category' %}">new</a></div>
+    {% if viewed_user is None %}
+        <div class="categories_header col"><a href="{% url 'new_category' %}">new</a></div>
+    {% endif %}
 </div>
 
 <div class="books_conteiner">
