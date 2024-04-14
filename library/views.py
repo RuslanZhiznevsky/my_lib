@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 
 from library.models import UserCategory, Book
 from library.forms import NewBookForm, NewCategoryForm
@@ -13,7 +14,7 @@ def _sort_user_books_by_categories(user):
 
     # make all the possible for this user categories empty lists
     # so when there is no books in some category(ies) you can still access this
-    # category in category(request, category, username=None) view
+    # category dict key in category() view
     category_objs = UserCategory.objects.filter(user=user)
     for category in [category_obj.category_name for category_obj in category_objs]:
         books_by_categories[category] = []
@@ -50,11 +51,13 @@ def all_books(request, username=None):
     return render(request, "all_books.html", context=context)
 
 
-# TODO: KeyError with category key
 @login_required
 def category(request, category, username=None):
     books_by_categories, viewed_user = _get_books_by_categories_and_viewed_user(request, username)
-    books = books_by_categories[category]
+    try:
+        books = books_by_categories[category]
+    except KeyError:
+        raise Http404
 
     context = {
         "user": request.user,
