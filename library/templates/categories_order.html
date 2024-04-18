@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+    <form method="POST" name="categories_order_form">
+        {% csrf_token %}
+        {% for category_select in categories %}
+            <select name="select_{{forloop.counter}}" required>
+                {% for category_option in categories %}
+                <option  value="{{category_option}}"{% if category_select == category_option %}selected{% endif %}>{{category_option}}</option> 
+                {% endfor %}
+            </select>
+        {% endfor %}
+        <button type="submit">Save</button>
+    </form>
+    {{ categories }}
+{% endblock content %}

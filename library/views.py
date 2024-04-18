@@ -73,6 +73,21 @@ def category(request, category, username=None):
 
 
 @login_required
+def categories_order(request):
+    if request.method == "POST":
+        pass
+    if request.method == "GET":
+        categories = _sort_user_books_by_categories(user=request.user).keys()
+
+    context = {
+        "user": request.user,
+        "categories": categories,
+    }
+
+    return render(request, "categories_order.html", context=context)
+
+
+@login_required
 def book(request, book_title, author, username=None):
     if username is None:
         book = get_object_or_404(Book, user=request.user, title=book_title, author=author)
