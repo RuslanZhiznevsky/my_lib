@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 
@@ -70,6 +70,34 @@ def category(request, category, username=None):
     }
 
     return render(request, "category.html", context=context)
+
+
+# TODO redirect
+@login_required
+def categories_order(request):
+    if request.method == "POST":
+        positions = {}
+        book_categoires = request.user.book_categories.all()
+
+        for key, value in request.POST.items():
+            if key.startswith("bookcategory_select_"):
+                book_category = book_categoires.get(category_name=value)
+                position = int(key.split("bookcategory_select_")[1])
+                positions[book_category] = position
+
+        BookCategory.set_positions(positions)
+
+        return redirect("your_all_books")
+
+    if request.method == "GET":
+        categories = _sort_user_books_by_categories(user=request.user).keys()
+
+    context = {
+        "user": request.user,
+        "categories": categories,
+    }
+
+    return render(request, "categories_order.html", context=context)
 
 
 @login_required

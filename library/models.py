@@ -159,6 +159,27 @@ class BookCategory(models.Model):
                 self.save()
                 book_category_to_swap_with.save()
 
+    @staticmethod
+    def set_positions(categories_positions: dict):
+        '''Sets new positions to the provided BookCategory objects
+
+        !!!Give users a way to only call this method on THEIR categories!!!
+
+        positions: Dict[BookCategory, int]
+
+        raises django.core.exceptions.ValidationErro
+        if there are 2 BookCategory objects with the same user and position'''
+        with transaction.atomic():
+            for category, position in categories_positions.items():
+                category.position = position
+                category.save()
+
+            # check if UniqueConstraint for user and position is violated
+            # if it is violated rollback will be performed and positions
+            # of the categories will return to the previous state
+            for category in categories_positions:
+                category.validate_constraints()
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name="user",
