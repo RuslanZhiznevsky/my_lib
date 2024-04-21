@@ -166,8 +166,10 @@ class BookCategory(models.Model):
         !!!Give users a way to only call this method on THEIR categories!!!
 
         positions: Dict[BookCategory, int]
+        Dictionary is used because you might want to change only
+        some of the positions.
 
-        raises django.core.exceptions.ValidationErro
+        Raises django.core.exceptions.ValidationError
         if there are 2 BookCategory objects with the same user and position'''
         with transaction.atomic():
             for category, position in categories_positions.items():

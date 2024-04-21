@@ -77,14 +77,21 @@ def category(request, category, username=None):
 def categories_order(request):
     if request.method == "POST":
         positions = {}
-        book_categoires = request.user.book_categories.all()
+        category_names_from_selects = []
+        categoires = request.user.book_categories.all()
 
         for key, value in request.POST.items():
             if key.startswith("bookcategory_select_"):
-                book_category = book_categoires.get(category_name=value)
+                # if so, value is a category name
+                category_names_from_selects.append(value)
+                if category_names_from_selects.count(value) != 1:
+                    raise ValueError(f"category '{value}' was assign multiple positions")
+
+                book_category = categoires.get(category_name=value)
                 position = int(key.split("bookcategory_select_")[1])
                 positions[book_category] = position
 
+        # set positions of categories according to provided POST
         BookCategory.set_positions(positions)
 
         return redirect("your_all_books")
