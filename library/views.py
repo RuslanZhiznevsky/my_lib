@@ -39,9 +39,13 @@ def _get_books_by_categories_and_viewed_user(request, username):
     return books_by_categories, viewed_user
 
 
-@login_required  # login_url="/login/")
+@login_required
 def all_books(request, username=None):
     books_by_categories, viewed_user = _get_books_by_categories_and_viewed_user(request, username)
+
+    if viewed_user is not None:
+        if viewed_user.to_show is False:  # user has private account
+            raise Http404
 
     context = {
         "user": request.user,
