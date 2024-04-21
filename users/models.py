@@ -7,6 +7,8 @@ from django.contrib.auth.models import (
     PermissionsMixin
 )
 
+from library.models import DEFAULT_BOOK_CATEGORIES
+
 
 class UserManager(BaseUserManager):
     def create_user(self, username, email, password=None, profile_picture=None):
@@ -26,9 +28,8 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
 
         # there might be an error, but the user is already created
-        user.book_categories.create(category_name="in progress")
-        user.book_categories.create(category_name="to-read")
-        user.book_categories.create(category_name="finished")
+        for category_name in DEFAULT_BOOK_CATEGORIES:
+            user.book_categories.create(category_name=category_name)
 
         return user
 

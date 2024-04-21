@@ -6,11 +6,9 @@ from django.core.validators import (
 from django.core.exceptions import ValidationError
 from django.conf import settings
 
-from users.models import User
-
 import datetime
 
-DEFAULT_BOOK_CATEGORIES = ["to-read", "reading", "finished"]
+DEFAULT_BOOK_CATEGORIES = ["reading", "to-read", "finished"]
 
 
 class Book(models.Model):
@@ -118,8 +116,8 @@ class Book(models.Model):
             if self.category.user != self.user:
                 raise ValidationError("Another user's category was assigned to this book")
         # Should only occure when using NewBookForm,
-        # because user field has blank and null = False 
-        except User.DoesNotExist:
+        # because user field has blank and null = False
+        except self.category.user.DoesNotExist:
             pass
 
         return super().clean()
@@ -146,21 +144,22 @@ class BookCategory(models.Model):
         return _dict[f"{field}__max"]
 
     def swap_position(self, new_position: int):
+        if self.position == new_position:
+            # no need to swap with itself
+            return
         with transaction.atomic():
-            if self.position == new_position:
-                # no need to swap with itself
-                return
-            else:
-                book_category_to_swap_with = BookCategory.objects.get(
-                    user=self.user,
-                    position=new_position
-                )
+            book_category_to_swap_with = BookCategory.objects.get(
+                user=self.user,
+                position=new_position
+            )
 
-                book_category_to_swap_with.position = self.position
-                self.position = new_position
+            book_category_to_swap_with.position, self.position = self.position, new_position
 
-                self.save()
-                book_category_to_swap_with.save()
+            self.save()
+            book_category_to_swap_with.save()
+
+            self.validate_constraints()
+            book_category_to_swap_with.validate_constraints()
 
     @staticmethod
     def set_positions(categories_positions: dict):
