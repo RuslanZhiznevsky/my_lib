@@ -24,6 +24,12 @@ class UserManager(BaseUserManager):
 
         user.set_password(password)
         user.save(using=self._db)
+
+        # there might be an error, but the user is already created
+        user.book_categories.create(category_name="in progress")
+        user.book_categories.create(category_name="to-read")
+        user.book_categories.create(category_name="finished")
+
         return user
 
     def create(self, *args, **kwargs):
@@ -81,7 +87,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # followers                 from UserFollowing model
 
     # books                     from library.Book model
-    # book_catagories     from library.models.Book
+    # book_catagories           from library.models.Book
 
     to_show = models.BooleanField(
         verbose_name="to show",

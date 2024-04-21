@@ -139,11 +139,11 @@ class Book(models.Model):
 
 # TODO: add tests
 class BookCategory(models.Model):
-    def _last_position():
+    def _last_position(self):
         field = "position"
-        _dict = BookCategory.objects.aggregate(models.Max(field, default=0))
+        _dict = BookCategory.objects.filter(user=self.user).aggregate(models.Max(field, default=0))
 
-        return _dict[f"{field}__max"] + 1
+        return _dict[f"{field}__max"]
 
     def swap_position(self, new_position: int):
         with transaction.atomic():
@@ -151,7 +151,10 @@ class BookCategory(models.Model):
                 # no need to swap with itself
                 return
             else:
-                book_category_to_swap_with = BookCategory.objects.get(position=new_position)
+                book_category_to_swap_with = BookCategory.objects.get(
+                    user=self.user,
+                    position=new_position
+                )
 
                 book_category_to_swap_with.position = self.position
                 self.position = new_position
@@ -199,7 +202,7 @@ class BookCategory(models.Model):
         null=False,
     )
     position = models.PositiveIntegerField(
-        default=_last_position,
+        default=0,  # real default will be assigned inside save() method
         verbose_name="position",
         help_text="position in the list of categories",
         blank=False,
@@ -215,8 +218,15 @@ class BookCategory(models.Model):
             models.UniqueConstraint(
                 fields=["user", "position"],
                 name="%(app_label)s_%(class)s_user_and_postion_unique",
+                deferrable=models.Deferrable.DEFERRED,
             )
         ]
+
+    def save(self, *args, **kwargs):
+        if self.position == 0:
+            self.position = self._last_position() + 1
+
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user}: '{self.category_name}' category[{self.position}]"
