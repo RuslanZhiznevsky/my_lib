@@ -78,7 +78,6 @@ def categories_order(request):
     if request.method == "POST":
         positions = {}
         book_categoires = request.user.book_categories.all()
-        rp = request.POST
 
         for key, value in request.POST.items():
             if key.startswith("bookcategory_select_"):
