@@ -47,6 +47,7 @@ def all_books(request, username=None):
         if viewed_user.to_show is False:  # user has private account
             raise Http404
 
+
     context = {
         "user": request.user,
 
