@@ -45,3 +45,6 @@ ROADMAP
 
 - users frontend:
     ?
+
+- new_book backend:
+    - extract info for NewBookForm fields from book file
