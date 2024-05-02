@@ -3,6 +3,8 @@ ROADMAP
     - login_required:
     - look at django's own views to learn
 
+- new_book backend:
+    - title and author required
 
 - all_books view frontend:
     - header
