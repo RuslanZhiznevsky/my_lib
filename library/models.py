@@ -27,7 +27,7 @@ class Book(models.Model):
         verbose_name="title",
         help_text="title of the book",
         max_length=60,
-        blank=True,
+        blank=False,
         # don't set True if blank=True
         null=False,
         unique=False,

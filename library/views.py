@@ -47,7 +47,6 @@ def all_books(request, username=None):
         if viewed_user.to_show is False:  # user has private account
             raise Http404
 
-
     context = {
         "user": request.user,
 
@@ -135,15 +134,18 @@ def book(request, book_title, author, username=None):
 @login_required
 def new_book(request):
     if request.method == "POST":
-        new_book_form = NewBookForm(request.POST)
-        if new_book_form.is_valid():
-            new_book_obj = new_book_form.save(commit=False)
+        form = NewBookForm(request.POST)
+        if form.is_valid():
+            new_book = form.save(commit=False)
 
-            new_book_obj.user = request.user
-            new_book_obj.clean()
-            new_book_obj.save()
+            if new_book.author == "":
+                new_book.author = "unset"
 
-            # redirect back
+            new_book.user = request.user
+            new_book.clean()
+            new_book.save()
+
+            return redirect("your_all_books")
         else:
             pass
 
@@ -171,11 +173,11 @@ def new_book(request):
         except KeyError:
             pass
 
-        new_book_form = NewBookForm(initial=initial)
+        form = NewBookForm(initial=initial)
 
     context = {
-        "new_book_form": new_book_form,
-        "errors": new_book_form.errors,
+        "new_book_form": form,
+        "errors": form.errors,
     }
 
     return render(request, "new_book.html", context=context)
