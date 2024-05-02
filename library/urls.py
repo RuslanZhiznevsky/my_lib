@@ -6,9 +6,10 @@ urlpatterns = [
     path("", views.all_books, name="your_all_books"),
 
     path("new_book/", views.new_book, name="new_book"),
+    path("book/<str:book_title> by <str:author>/", views.book, name="your_book"),
+
     path("new_category/", views.new_category, name="new_category"),
     path("categories_order/", views.categories_order, name="categories_order"),
-    path("book/<str:book_title> by <str:author>/", views.book, name="your_book"),
 
     path("users/", views.users_list, name="users_list"),
     path("users/<str:username>/", views.all_books, name="someones_all_books"),
