@@ -77,7 +77,6 @@ def category(request, category, username=None):
     return render(request, "category.html", context=context)
 
 
-# TODO redirect
 @login_required
 def categories_order(request):
     if request.method == "POST":
