@@ -19,7 +19,7 @@ class UserManager(BaseUserManager):
             username=username,
             email=self.normalize_email(email),
             profile_picture=profile_picture,
-            to_show=True,
+            is_private=True,
             is_active=True,
             is_staff=False,
         )
@@ -90,7 +90,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # books                     from library.Book model
     # book_catagories           from library.models.Book
 
-    to_show = models.BooleanField(
+    is_private = models.BooleanField(
         verbose_name="to show",
         help_text="if this flag is set to False "
                   "user won't be listed in any public listings",

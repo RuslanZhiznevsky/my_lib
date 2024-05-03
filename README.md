@@ -1,6 +1,9 @@
 ROADMAP
 - GENERAL:
+    - make instructions for Vika
     - look at django's own views to learn
+    - renaming and reforming:
+        ?
 
 - all_books view frontend:
     - header
@@ -14,9 +17,6 @@ ROADMAP
 
 - book view backend:
     - change info about book:
-        - how to change model from view?
-        - make view POSTable
-        - test changes
         - make sure filenames associated with book also change
 
 - book view fontend:

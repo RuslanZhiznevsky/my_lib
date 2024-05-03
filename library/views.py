@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404
 
 from library.models import BookCategory, Book
-from library.forms import NewBookForm, NewCategoryForm
+from library.forms import BookForm, CategoryForm
 
 from users.models import User
 
@@ -39,13 +39,17 @@ def _get_books_by_categories_and_viewed_user(request, username):
     return books_by_categories, viewed_user
 
 
+def _raise_404_if_private(user: User):
+    if user.is_private is False:  # user has private account
+        raise Http404
+
+
 @login_required
 def all_books(request, username=None):
     books_by_categories, viewed_user = _get_books_by_categories_and_viewed_user(request, username)
 
-    if viewed_user is not None:
-        if viewed_user.to_show is False:  # user has private account
-            raise Http404
+    if viewed_user:
+        _raise_404_if_private(viewed_user)
 
     context = {
         "user": request.user,
@@ -60,6 +64,9 @@ def all_books(request, username=None):
 @login_required
 def category(request, category, username=None):
     books_by_categories, viewed_user = _get_books_by_categories_and_viewed_user(request, username)
+    if viewed_user:
+        _raise_404_if_private(viewed_user)
+
     try:
         books = books_by_categories[category]
     except KeyError:
@@ -119,11 +126,23 @@ def book(request, book_title, author, username=None):
         viewed_user = get_object_or_404(User, username=username)
         book = get_object_or_404(Book, user=viewed_user, title=book_title, author=author)
 
+    if viewed_user:
+        _raise_404_if_private(viewed_user)
+
+    if request.method == "GET":
+        form = BookForm(instance=book)
+
+    if request.method == "POST":
+        form = BookForm(request.POST, instance=book)
+        if form.is_valid():
+            updated_book = form.save()
+            return redirect("your_book", updated_book.title, updated_book.author)
+
     context = {
         "user": request.user,
-
         "viewed_user": viewed_user,
         "book": book,
+        "form": form,
     }
 
     return render(request, "book.html", context=context)
@@ -134,7 +153,7 @@ def book(request, book_title, author, username=None):
 @login_required
 def new_book(request):
     if request.method == "POST":
-        form = NewBookForm(request.POST)
+        form = BookForm(request.POST)
         if form.is_valid():
             new_book = form.save(commit=False)
 
@@ -173,7 +192,7 @@ def new_book(request):
         except KeyError:
             pass
 
-        form = NewBookForm(initial=initial)
+        form = BookForm(initial=initial)
 
     context = {
         "new_book_form": form,
@@ -188,7 +207,7 @@ def new_book(request):
 @login_required
 def new_category(request):
     if request.method == "POST":
-        new_category_form = NewCategoryForm(request.POST)
+        new_category_form = CategoryForm(request.POST)
         if new_category_form.is_valid():
             new_category_model_obj = new_category_form.save(commit=False)
 
@@ -199,7 +218,7 @@ def new_category(request):
             pass
 
     if request.method == "GET":
-        new_category_form = NewCategoryForm()
+        new_category_form = CategoryForm()
 
     context = {
         "new_category_form": new_category_form,
