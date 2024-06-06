@@ -7,7 +7,7 @@
         <link href="css/style.css" rel="stylesheet">
     </head>
     <body>
-        <form method="POST" name="new_book_form">
+        <form method="POST" name="new_book_form" enctype="multipart/form-data">
             {% csrf_token %}
             {{ new_book_form }} 
 

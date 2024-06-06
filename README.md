@@ -18,6 +18,7 @@ ROADMAP
 - book view backend:
     - change info about book:
         - make sure filenames associated with book also change
+        - when user changes username change the directory of his books
 
 - book view fontend:
     - ?

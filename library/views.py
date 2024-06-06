@@ -8,6 +8,36 @@ from library.forms import BookForm, CategoryForm
 from users.models import User
 
 from collections import OrderedDict
+import os
+import shutil
+
+
+def _move_book_files(book: Book, to_move_file=True, to_move_cover=True):
+    '''Moves book file and cover file to the directory
+    according to the new title or author.
+
+    Old files left untouched. You might want to delete them.
+    '''
+    if book.file and to_move_file:
+        storage = book.file.storage
+        print(f"location: {storage.location}")
+        new_file_path = Book._get_bookfile_upload_path(
+            book,
+            book.file.name.split("/")[-1]
+        )
+        # create copy of the file at the new path
+        storage.save(new_file_path, book.file.file)
+        book.file.name = new_file_path
+
+    if book.cover and to_move_cover:
+        storage = book.cover.storage
+        new_cover_path = Book._get_coverfile_upload_path(
+            book,
+            book.cover.name.split("/")[-1]
+        )
+        print(new_cover_path)
+        storage.save(new_cover_path, book.cover.file)
+        book.cover.name = new_cover_path
 
 
 def _sort_user_books_by_categories(user):
@@ -133,9 +163,44 @@ def book(request, book_title, author, username=None):
         form = BookForm(instance=book)
 
     if request.method == "POST":
-        form = BookForm(request.POST, instance=book)
+        has_files = False
+        if book.file:
+            old_dir = "/".join(book.file.path.split("/")[:-1])
+            old_book_filename = book.file.name.split("/")[-1]
+            has_files = True
+        if book.cover:
+            old_dir = "/".join(book.cover.path.split("/")[:-1])
+            old_cover_filename = book.cover.name.split("/")[-1]
+            has_files = True
+
+        form = BookForm(request.POST, request.FILES, instance=book)
         if form.is_valid():
-            updated_book = form.save()
+            updated_book = form.save(commit=False)
+            if has_files:
+                to_move_file = to_move_cover = True
+
+                if "file" in form.changed_data:
+                    print(f"changed file: {form.cleaned_data['file']}")
+                    try:
+                        os.remove(old_dir + "/" + old_book_filename)
+                    except (FileNotFoundError, IsADirectoryError, UnboundLocalError):
+                        pass
+                    to_move_file = False
+
+                if "cover" in form.changed_data:
+                    print(f"changed cover: {form.cleaned_data['cover']}")
+                    try:
+                        os.remove(old_dir + "/" + old_cover_filename)
+                    except (FileNotFoundError, IsADirectoryError, UnboundLocalError):
+                        pass
+                    to_move_cover = False
+
+                if "title" in form.changed_data or "author" in form.changed_data:
+                    _move_book_files(updated_book, to_move_file=to_move_file, to_move_cover=to_move_cover)
+                    # moving doesn't delete files inside old directory, so
+                    shutil.rmtree(old_dir)
+
+            updated_book.save()
             return redirect("your_book", updated_book.title, updated_book.author)
 
     context = {
@@ -153,7 +218,7 @@ def book(request, book_title, author, username=None):
 @login_required
 def new_book(request):
     if request.method == "POST":
-        form = BookForm(request.POST)
+        form = BookForm(request.POST, request.FILES)
         if form.is_valid():
             new_book = form.save(commit=False)
 

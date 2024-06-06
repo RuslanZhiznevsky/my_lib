@@ -115,10 +115,8 @@ class Book(models.Model):
         try:
             if self.category.user != self.user:
                 raise ValidationError("Another user's category was assigned to this book")
-        # Should only occure when using NewBookForm,
-        # because user field has blank and null = False
-        except self.category.user.DoesNotExist:
-            pass
+        except self.category.user.DoesNotExist: # Should only occure when using NewBookForm,
+            pass                                # because user field has blank and null = False
 
         return super().clean()
 
