@@ -12,33 +12,6 @@ import os
 import shutil
 
 
-def _move_book_files(book: Book, to_move_file=True, to_move_cover=True):
-    '''Moves book file and cover file to the directory
-    according to the new title or author.
-
-    Old files left untouched. You might want to delete them.
-    '''
-    if book.file and to_move_file:
-        storage = book.file.storage
-        new_file_path = Book._get_book_assosiated_file_upload_path(
-            book,
-            book.file.name.split("/")[-1]
-        )
-        # create copy of the file at the new path
-        storage.save(new_file_path, book.file.file)
-        book.file.name = new_file_path
-
-    if book.cover and to_move_cover:
-        storage = book.cover.storage
-        new_cover_path = Book._get_book_assosiated_file_upload_path(
-            book,
-            book.cover.name.split("/")[-1]
-        )
-        print(new_cover_path)
-        storage.save(new_cover_path, book.cover.file)
-        book.cover.name = new_cover_path
-
-
 def _sort_user_books_by_categories(user):
     books = user.books.all()
     books_by_categories = OrderedDict()
@@ -164,15 +137,12 @@ def book(request, book_title, author, username=None):
     if request.method == "POST":
         populated_filefields = book.get_populated_filefields()
         fields_files_of_which_to_move = [field.field.name for field in populated_filefields]
-        print(f"{fields_files_of_which_to_move}")
         old_file_paths = {}
 
         for filefield in populated_filefields:
             old_file_paths[filefield.field.name] = filefield.path
 
         old_dirs = set(["/".join(file_path.split("/")[:-1]) for file_path in old_file_paths.values()])
-        print(f"old_file_paths: {old_file_paths}")
-        print(f"old_dirs: {old_dirs}")
 
         form = BookForm(request.POST, request.FILES, instance=book)
         if form.is_valid():
@@ -180,16 +150,12 @@ def book(request, book_title, author, username=None):
             for filefield in populated_filefields:
                 field_name = filefield.field.name
                 if field_name in form.changed_data:
-                    print(f"{field_name} in changed_data.")
                     os.remove(old_file_paths[field_name])
                     fields_files_of_which_to_move.remove(field_name)
 
             if "title" in form.changed_data or "author" in form.changed_data:
-                print(f"changed title or author. Updating file paths...")
-                print(f"{fields_files_of_which_to_move}")
                 book.update_book_assosiated_file_paths(fields_files_of_which_to_move)
                 for old_dir in old_dirs:
-                    print(f"deleting {old_dir}")
                     shutil.rmtree(old_dir)
 
             updated_book.save()
