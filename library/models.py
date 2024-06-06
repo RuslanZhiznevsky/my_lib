@@ -12,6 +12,35 @@ DEFAULT_BOOK_CATEGORIES = ["reading", "to-read", "finished"]
 
 
 class Book(models.Model):
+    def _get_book_assosiated_file_upload_path(instance, filename):
+        return f"books/{instance.user}/{instance.author}_{instance.title}/{filename}"
+
+    def update_book_assosiated_file_paths(self, filefield_names="all"):
+        if filefield_names == "all":
+            filefield_names = [field.field.name for field in self.get_populated_filefields()]
+
+        for filefield_name in filefield_names:
+            filefield = self.__getattribute__(filefield_name)
+            storage = filefield.storage
+            new_file_path = self._get_book_assosiated_file_upload_path(
+                filefield.path.split("/")[-1]
+            )
+            storage.save(new_file_path, filefield.file)
+            filefield.name = new_file_path
+
+    def get_populated_filefields(self):
+        filefields = [self.__getattribute__(field.name) for field in self._meta.fields if isinstance(field, models.FileField)]
+        populated_filefields = []
+
+        for field in filefields:
+            try:
+                if field.file:
+                    populated_filefields.append(field)
+            except ValueError:
+                pass
+
+        return populated_filefields
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name="user",
@@ -84,25 +113,19 @@ class Book(models.Model):
         verbose_name="category",
     )
 
-    # TODO change filepath when changed inside view
-    def _get_bookfile_upload_path(instance, filename):
-        return f"books/{instance.user}/{instance.author}_{instance.title}/{filename}"
     file = models.FileField(
         verbose_name="book file",
         help_text="book file to upload",
-        upload_to=_get_bookfile_upload_path,
+        upload_to=_get_book_assosiated_file_upload_path,
         blank=True,
         null=True,
         default=None,
     )
 
-    def _get_coverfile_upload_path(instance, filename):
-        return f"books/{instance.user}/{instance.author}_{instance.title}/{filename}"
-    # TODO change filepath when updated inside view
     cover = models.ImageField(
         verbose_name="cover image",
         help_text="image of the cover of the book",
-        upload_to=_get_coverfile_upload_path,
+        upload_to=_get_book_assosiated_file_upload_path,
         blank=True,
         null=True,
         default=None,
@@ -112,6 +135,8 @@ class Book(models.Model):
         return f"{self.user}:{self.title} by {self.author}"
 
     def clean(self):
+        if self.author == "":
+            self.author == "unset"
         try:
             if self.category.user != self.user:
                 raise ValidationError("Another user's category was assigned to this book")

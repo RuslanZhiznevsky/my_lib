@@ -10,6 +10,12 @@ class BookForm(ModelForm):
 
         exclude = ["user"]
 
+    def clean(self):
+        if self.cleaned_data["author"] == "":
+            self.cleaned_data["author"] = "unset"
+
+        return super().clean()
+
 
 class CategoryForm(ModelForm):
     class Meta:

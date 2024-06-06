@@ -20,8 +20,7 @@ def _move_book_files(book: Book, to_move_file=True, to_move_cover=True):
     '''
     if book.file and to_move_file:
         storage = book.file.storage
-        print(f"location: {storage.location}")
-        new_file_path = Book._get_bookfile_upload_path(
+        new_file_path = Book._get_book_assosiated_file_upload_path(
             book,
             book.file.name.split("/")[-1]
         )
@@ -31,7 +30,7 @@ def _move_book_files(book: Book, to_move_file=True, to_move_cover=True):
 
     if book.cover and to_move_cover:
         storage = book.cover.storage
-        new_cover_path = Book._get_coverfile_upload_path(
+        new_cover_path = Book._get_book_assosiated_file_upload_path(
             book,
             book.cover.name.split("/")[-1]
         )
@@ -163,41 +162,34 @@ def book(request, book_title, author, username=None):
         form = BookForm(instance=book)
 
     if request.method == "POST":
-        has_files = False
-        if book.file:
-            old_dir = "/".join(book.file.path.split("/")[:-1])
-            old_book_filename = book.file.name.split("/")[-1]
-            has_files = True
-        if book.cover:
-            old_dir = "/".join(book.cover.path.split("/")[:-1])
-            old_cover_filename = book.cover.name.split("/")[-1]
-            has_files = True
+        populated_filefields = book.get_populated_filefields()
+        fields_files_of_which_to_move = [field.field.name for field in populated_filefields]
+        print(f"{fields_files_of_which_to_move}")
+        old_file_paths = {}
+
+        for filefield in populated_filefields:
+            old_file_paths[filefield.field.name] = filefield.path
+
+        old_dirs = set(["/".join(file_path.split("/")[:-1]) for file_path in old_file_paths.values()])
+        print(f"old_file_paths: {old_file_paths}")
+        print(f"old_dirs: {old_dirs}")
 
         form = BookForm(request.POST, request.FILES, instance=book)
         if form.is_valid():
             updated_book = form.save(commit=False)
-            if has_files:
-                to_move_file = to_move_cover = True
+            for filefield in populated_filefields:
+                field_name = filefield.field.name
+                if field_name in form.changed_data:
+                    print(f"{field_name} in changed_data.")
+                    os.remove(old_file_paths[field_name])
+                    fields_files_of_which_to_move.remove(field_name)
 
-                if "file" in form.changed_data:
-                    print(f"changed file: {form.cleaned_data['file']}")
-                    try:
-                        os.remove(old_dir + "/" + old_book_filename)
-                    except (FileNotFoundError, IsADirectoryError, UnboundLocalError):
-                        pass
-                    to_move_file = False
-
-                if "cover" in form.changed_data:
-                    print(f"changed cover: {form.cleaned_data['cover']}")
-                    try:
-                        os.remove(old_dir + "/" + old_cover_filename)
-                    except (FileNotFoundError, IsADirectoryError, UnboundLocalError):
-                        pass
-                    to_move_cover = False
-
-                if "title" in form.changed_data or "author" in form.changed_data:
-                    _move_book_files(updated_book, to_move_file=to_move_file, to_move_cover=to_move_cover)
-                    # moving doesn't delete files inside old directory, so
+            if "title" in form.changed_data or "author" in form.changed_data:
+                print(f"changed title or author. Updating file paths...")
+                print(f"{fields_files_of_which_to_move}")
+                book.update_book_assosiated_file_paths(fields_files_of_which_to_move)
+                for old_dir in old_dirs:
+                    print(f"deleting {old_dir}")
                     shutil.rmtree(old_dir)
 
             updated_book.save()
